@@ -1,42 +1,43 @@
 using Core.Entities;
 using Core.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data;
 
-public class BookRepository : IBookRepository
+public class BookRepository(StoreContext context) : IBookRepository
 {
     public void AddBook(Book book)
     {
-        throw new NotImplementedException();
+        context.Books.Add(book);
     }
 
     public bool BookExists(int id)
     {
-        throw new NotImplementedException();
+        return context.Books.Any(x => x.Id == id);
     }
 
     public void DeleteBook(Book book)
     {
-        throw new NotImplementedException();
+        context.Books.Remove(book);
     }
 
-    public Task<Book?> GetBookByIdAsync(int id)
+    public async Task<Book?> GetBookByIdAsync(int id)
     {
-        throw new NotImplementedException();
+        return await context.Books.FindAsync(id);
     }
 
-    public Task<IReadOnlyList<Book>> GetBooksAsync()
+    public async Task<IReadOnlyList<Book>> GetBooksAsync()
     {
-        throw new NotImplementedException();
+        return await context.Books.ToListAsync();
     }
 
-    public Task<bool> SaveChangesAsync()
+    public async Task<bool> SaveChangesAsync()
     {
-        throw new NotImplementedException();
+        return await context.SaveChangesAsync() > 0;
     }
 
     public void UpdateBook(Book book)
     {
-        throw new NotImplementedException();
+        context.Entry(book).State = EntityState.Modified;
     }
 }
