@@ -9,4 +9,5 @@ public class Book : BaseEntity
     public required string Author { get; set; }
     public required string Category { get; set; }
     public int QuantityInStock { get; set; }
+    public decimal Rating { get; set; }
 }

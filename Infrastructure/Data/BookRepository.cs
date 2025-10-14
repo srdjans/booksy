@@ -21,6 +21,13 @@ public class BookRepository(StoreContext context) : IBookRepository
         context.Books.Remove(book);
     }
 
+    public async Task<IReadOnlyList<string>> GetAuthorsAsync()
+    {
+        return await context.Books.Select(x => x.Author)
+            .Distinct()
+            .ToListAsync();
+    }
+
     public async Task<Book?> GetBookByIdAsync(int id)
     {
         return await context.Books.FindAsync(id);
@@ -29,6 +36,13 @@ public class BookRepository(StoreContext context) : IBookRepository
     public async Task<IReadOnlyList<Book>> GetBooksAsync()
     {
         return await context.Books.ToListAsync();
+    }
+
+    public async Task<IReadOnlyList<string>> GetCategoriesAsync()
+    {
+        return await context.Books.Select(x => x.Category)
+            .Distinct()
+            .ToListAsync();
     }
 
     public async Task<bool> SaveChangesAsync()
