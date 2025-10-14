@@ -12,9 +12,9 @@ namespace API.Controllers;
 public class BooksController(IBookRepository repo) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Book>>> GetBooks()
+    public async Task<ActionResult<IEnumerable<Book>>> GetBooks(string? author, string? category, string? sort)
     {
-        return Ok(await repo.GetBooksAsync());
+        return Ok(await repo.GetBooksAsync(author, category, sort));
     }
 
     [HttpGet("{id:int}")]
