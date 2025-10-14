@@ -4,7 +4,7 @@ namespace Core.Interfaces;
 
 public interface IBookRepository
 {
-    Task<IReadOnlyList<Book>> GetBooksAsync();
+    Task<IReadOnlyList<Book>> GetBooksAsync(string? author, string? category, string? sort);
     Task<Book?> GetBookByIdAsync(int id);
     Task<IReadOnlyList<string>> GetAuthorsAsync();
     Task<IReadOnlyList<string>> GetCategoriesAsync();

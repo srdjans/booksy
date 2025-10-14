@@ -33,9 +33,28 @@ public class BookRepository(StoreContext context) : IBookRepository
         return await context.Books.FindAsync(id);
     }
 
-    public async Task<IReadOnlyList<Book>> GetBooksAsync()
+    public async Task<IReadOnlyList<Book>> GetBooksAsync(string? author, string? category, string? sort)
     {
-        return await context.Books.ToListAsync();
+        var query = context.Books.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(author))
+        {
+            query = query.Where(x => x.Author == author);
+        }
+
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            query = query.Where(x => x.Category == category);
+        }
+
+        query = sort switch
+        {
+            "priceAsc" => query.OrderBy(x => x.Price),
+            "priceDesc" => query.OrderByDescending(x => x.Price),
+            _ => query.OrderBy(x => x.Title)
+        };
+
+        return await query.ToListAsync();
     }
 
     public async Task<IReadOnlyList<string>> GetCategoriesAsync()
