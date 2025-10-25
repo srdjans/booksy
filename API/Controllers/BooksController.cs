@@ -1,26 +1,23 @@
-using System.Net.Http.Headers;
 using Core.Entities;
 using Core.Interfaces;
-using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BooksController(IBookRepository repo) : ControllerBase
+public class BooksController(IGenericRepository<Book> repo) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Book>>> GetBooks(string? author, string? category, string? sort)
     {
-        return Ok(await repo.GetBooksAsync(author, category, sort));
+        return Ok(await repo.ListAllAsync());
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<Book>> GetBook(int id)
     {
-        var book = await repo.GetBookByIdAsync(id);
+        var book = await repo.GetByIdAsync(id);
 
         if (book == null)
         {
@@ -33,9 +30,9 @@ public class BooksController(IBookRepository repo) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Book>> CreateBook(Book book)
     {
-        repo.AddBook(book);
+        repo.Add(book);
 
-        if (await repo.SaveChangesAsync())
+        if (await repo.SaveAllAsync())
         {
             return CreatedAtAction("GetBook", new { id = book.Id }, book);
         }
@@ -51,9 +48,9 @@ public class BooksController(IBookRepository repo) : ControllerBase
             return BadRequest("Cannot update this book");
         }
 
-        repo.UpdateBook(book);
+        repo.Update(book);
 
-        if (await repo.SaveChangesAsync())
+        if (await repo.SaveAllAsync())
         {
             return NoContent();
         }
@@ -64,16 +61,16 @@ public class BooksController(IBookRepository repo) : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> DeleteBook(int id)
     {
-        var book = await repo.GetBookByIdAsync(id);
+        var book = await repo.GetByIdAsync(id);
 
         if (book == null)
         {
             return NotFound();
         }
 
-        repo.DeleteBook(book);
+        repo.Remove(book);
 
-        if (await repo.SaveChangesAsync())
+        if (await repo.SaveAllAsync())
         {
             return NoContent();
         }
@@ -84,17 +81,20 @@ public class BooksController(IBookRepository repo) : ControllerBase
     [HttpGet("categories")]
     public async Task<ActionResult<IReadOnlyList<string>>> GetCategories()
     {
-        return Ok(await repo.GetCategoriesAsync());
+        // TODO: Implement method
+        return Ok();
     }
 
     [HttpGet("authors")]
     public async Task<ActionResult<IReadOnlyList<string>>> GetAuthors()
     {
-        return Ok(await repo.GetAuthorsAsync());
+        // TODO: Implement method
+        return Ok();
     }
 
     private bool BookExists(int id)
     {
-        return repo.BookExists(id);
+        // TODO: Implement method
+        return repo.Exists(id);
     }
 }
