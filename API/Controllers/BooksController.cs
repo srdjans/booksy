@@ -1,5 +1,6 @@
 using Core.Entities;
 using Core.Interfaces;
+using Core.Specifications;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
@@ -11,7 +12,10 @@ public class BooksController(IGenericRepository<Book> repo) : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Book>>> GetBooks(string? author, string? category, string? sort)
     {
-        return Ok(await repo.ListAllAsync());
+        var spec = new BookSpecification(author, category);
+        var books = await repo.ListAsync(spec);
+
+        return Ok(books);
     }
 
     [HttpGet("{id:int}")]
