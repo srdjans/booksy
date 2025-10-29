@@ -12,7 +12,7 @@ public class BooksController(IGenericRepository<Book> repo) : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Book>>> GetBooks(string? author, string? category, string? sort)
     {
-        var spec = new BookSpecification(author, category);
+        var spec = new BookSpecification(author, category, sort);
         var books = await repo.ListAsync(spec);
 
         return Ok(books);
