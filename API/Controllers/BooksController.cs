@@ -85,15 +85,17 @@ public class BooksController(IGenericRepository<Book> repo) : ControllerBase
     [HttpGet("categories")]
     public async Task<ActionResult<IReadOnlyList<string>>> GetCategories()
     {
-        // TODO: Implement method
-        return Ok();
+        var spec = new CategoryListSpecification();
+
+        return Ok(await repo.ListAsync(spec));
     }
 
     [HttpGet("authors")]
     public async Task<ActionResult<IReadOnlyList<string>>> GetAuthors()
     {
-        // TODO: Implement method
-        return Ok();
+        var spec = new AuthorListSpecification();
+
+        return Ok(await repo.ListAsync(spec));
     }
 
     private bool BookExists(int id)
