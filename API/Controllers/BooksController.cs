@@ -1,27 +1,46 @@
 using Core.Entities;
-using Core.Interfaces;
-using Core.Specifications;
+using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BooksController(IGenericRepository<Book> repo) : ControllerBase
+public class BooksController(StoreContext dbContext) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Book>>> GetBooks(string? author, string? category, string? sort)
     {
-        var spec = new BookSpecification(author, category, sort);
-        var books = await repo.ListAsync(spec);
+        var query = dbContext.Books.AsQueryable();
 
-        return Ok(books);
+        if (!string.IsNullOrWhiteSpace(author))
+        {
+            query = query.Where(x => x.Author == author);
+        }
+
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            query = query.Where(x => x.Category == category);
+        }
+
+        query = sort switch
+        {
+            "priceAsc" => query.OrderBy(x => x.Price),
+            "priceDesc" => query.OrderByDescending(x => x.Price),
+            _ => query
+        };
+
+        // TODO: Add pagination (+limit) and searching by multiple authors/categories
+
+        return Ok(await query.ToListAsync());
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<Book>> GetBook(int id)
     {
-        var book = await repo.GetByIdAsync(id);
+        // TODO: Add DTOs
+        var book = await dbContext.Books.FindAsync(id);
 
         if (book == null)
         {
@@ -34,47 +53,49 @@ public class BooksController(IGenericRepository<Book> repo) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Book>> CreateBook(Book book)
     {
-        repo.Add(book);
+        dbContext.Books.Add(book);
 
-        if (await repo.SaveAllAsync())
-        {
-            return CreatedAtAction("GetBook", new { id = book.Id }, book);
-        }
+        await dbContext.SaveChangesAsync();
 
-        return BadRequest("Problem creating book");
+        return CreatedAtAction(nameof(GetBook), new { id = book.Id }, book);
     }
 
     [HttpPut("{id:int}")]
-    public async Task<ActionResult> UpdateBook(int id, Book book)
+    public async Task<ActionResult> UpdateBook(int id, Book updatedBook)
     {
-        if (book.Id != id || !BookExists(id))
+        if (updatedBook.Id != id)
         {
-            return BadRequest("Cannot update this book");
+            return BadRequest("Book ID mismatch");
         }
 
-        repo.Update(book);
+        var existingBook = await dbContext.Books.FindAsync(id);
 
-        if (await repo.SaveAllAsync())
+        if (existingBook == null)
         {
-            return NoContent();
+            return NotFound();
         }
 
-        return BadRequest("Problem updating book");
+        existingBook.Title = updatedBook.Title;
+        existingBook.Summary = updatedBook.Summary;
+
+        await dbContext.SaveChangesAsync();
+
+        return NoContent();
     }
 
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> DeleteBook(int id)
     {
-        var book = await repo.GetByIdAsync(id);
+        var book = await dbContext.Books.FindAsync(id);
 
         if (book == null)
         {
             return NotFound();
         }
 
-        repo.Remove(book);
+        dbContext.Remove(book);
 
-        if (await repo.SaveAllAsync())
+        if (await dbContext.SaveChangesAsync() > 0)
         {
             return NoContent();
         }
@@ -85,22 +106,16 @@ public class BooksController(IGenericRepository<Book> repo) : ControllerBase
     [HttpGet("categories")]
     public async Task<ActionResult<IReadOnlyList<string>>> GetCategories()
     {
-        var spec = new CategoryListSpecification();
-
-        return Ok(await repo.ListAsync(spec));
+        return await dbContext.Books.Select(x => x.Category)
+            .Distinct()
+            .ToListAsync();
     }
 
     [HttpGet("authors")]
     public async Task<ActionResult<IReadOnlyList<string>>> GetAuthors()
     {
-        var spec = new AuthorListSpecification();
-
-        return Ok(await repo.ListAsync(spec));
-    }
-
-    private bool BookExists(int id)
-    {
-        // TODO: Implement method
-        return repo.Exists(id);
+        return await dbContext.Books.Select(x => x.Author)
+            .Distinct()
+            .ToListAsync();
     }
 }
