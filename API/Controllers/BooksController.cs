@@ -3,6 +3,7 @@ using Core.Entities;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using API.RequestHelpers;
 
 namespace API.Controllers;
 
@@ -11,7 +12,7 @@ namespace API.Controllers;
 public class BooksController(StoreContext dbContext) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Book>>> GetBooks(
+    public async Task<ActionResult<Pagination<Book>>> GetBooks(
         string? authors,
         string? categories,
         string? sort,
@@ -19,52 +20,37 @@ public class BooksController(StoreContext dbContext) : ControllerBase
         int pageSize = 10)
     {
         const int maxPageSize = 50;
+        const int minPageNumber = 1;
+
         pageSize = Math.Min(pageSize, maxPageSize);
+        pageNumber = Math.Max(pageNumber, minPageNumber);
 
         var query = dbContext.Books.AsQueryable();
 
-        // Filter by authors
-        if (!string.IsNullOrWhiteSpace(authors))
-        {
-            var authorList = authors
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(x => x.ToLower())
-                .ToArray();
+        // Filters
+        query = ApplyAuthorFilter(query, authors);
+        query = ApplyCategoryFilter(query, categories);
 
-            query = query.Where(x => authorList.Contains(x.Author.ToLower()));
-        }
-        
-        // Filter by categories
-        if (!string.IsNullOrWhiteSpace(categories))
-        {
-            var categoryList = categories
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(x => x.ToLower())
-                .ToArray();
-
-            query = query.Where(x => categoryList.Contains(x.Category.ToLower()));
-        }
+        // Count 
+        var count = await query.CountAsync();
 
         // Sort
-        query = sort switch
-        {
-            "priceAsc" => query.OrderBy(x => x.Price),
-            "priceDesc" => query.OrderByDescending(x => x.Price),
-            _ => query.OrderBy(x => x.Title)
-        };
+        query = ApplySorting(query, sort);
 
         // Pagination
-        query = query
+        var books = await query
             .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize);
+            .Take(pageSize)
+            .ToListAsync();
 
-        return Ok(await query.ToListAsync());
+        var pagedResult = new Pagination<Book>(pageNumber, pageSize, count, books);
+
+        return Ok(pagedResult);
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<Book>> GetBook(int id)
     {
-        // TODO: Add DTOs
         var book = await dbContext.Books.FindAsync(id);
 
         if (book == null)
@@ -132,5 +118,41 @@ public class BooksController(StoreContext dbContext) : ControllerBase
         return await dbContext.Books.Select(x => x.Author)
             .Distinct()
             .ToListAsync();
+    }
+
+    private static IQueryable<Book> ApplyAuthorFilter(IQueryable<Book> query, string? authors)
+    {
+        if (string.IsNullOrWhiteSpace(authors)) 
+            return query;
+
+        var authorList = authors
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(x => x.ToLower())
+            .ToArray();
+
+        return query.Where(x => authorList.Contains(x.Author.ToLower()));
+    }
+
+    private static IQueryable<Book> ApplyCategoryFilter(IQueryable<Book> query, string? categories)
+    {
+        if (string.IsNullOrWhiteSpace(categories)) 
+            return query;
+
+        var categoryList = categories
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(x => x.ToLower())
+            .ToArray();
+
+        return query.Where(x => categoryList.Contains(x.Category.ToLower()));
+    }
+
+    private static IQueryable<Book> ApplySorting(IQueryable<Book> query, string? sort)
+    {
+        return sort switch
+        {
+            "priceAsc" => query.OrderBy(b => b.Price),
+            "priceDesc" => query.OrderByDescending(b => b.Price),
+            _ => query.OrderBy(b => b.Title)
+        };   
     }
 }
