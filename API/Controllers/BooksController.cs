@@ -122,7 +122,7 @@ public class BooksController(StoreContext dbContext) : ControllerBase
 
     private static IQueryable<Book> ApplyAuthorFilter(IQueryable<Book> query, string? authors)
     {
-        if (string.IsNullOrWhiteSpace(authors)) 
+        if (string.IsNullOrWhiteSpace(authors))
             return query;
 
         var authorList = authors
