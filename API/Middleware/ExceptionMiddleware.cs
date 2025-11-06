@@ -4,7 +4,7 @@ using API.Errors;
 
 namespace API.Middleware;
 
-public class ExceptionMiddleWare(IHostEnvironment env, RequestDelegate next)
+public class ExceptionMiddleware(IHostEnvironment env, RequestDelegate next)
 {
     public async Task InvokeAsync(HttpContext context)
     {

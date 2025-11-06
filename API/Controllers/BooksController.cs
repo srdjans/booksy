@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using Core.Entities;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -10,28 +11,52 @@ namespace API.Controllers;
 public class BooksController(StoreContext dbContext) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Book>>> GetBooks(string? author, string? category, string? sort)
+    public async Task<ActionResult<IEnumerable<Book>>> GetBooks(
+        string? authors,
+        string? categories,
+        string? sort,
+        int pageNumber = 1,
+        int pageSize = 10)
     {
+        const int maxPageSize = 50;
+        pageSize = Math.Min(pageSize, maxPageSize);
+
         var query = dbContext.Books.AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(author))
+        // Filter by authors
+        if (!string.IsNullOrWhiteSpace(authors))
         {
-            query = query.Where(x => x.Author == author);
+            var authorList = authors
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(x => x.ToLower())
+                .ToArray();
+
+            query = query.Where(x => authorList.Contains(x.Author.ToLower()));
+        }
+        
+        // Filter by categories
+        if (!string.IsNullOrWhiteSpace(categories))
+        {
+            var categoryList = categories
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(x => x.ToLower())
+                .ToArray();
+
+            query = query.Where(x => categoryList.Contains(x.Category.ToLower()));
         }
 
-        if (!string.IsNullOrWhiteSpace(category))
-        {
-            query = query.Where(x => x.Category == category);
-        }
-
+        // Sort
         query = sort switch
         {
             "priceAsc" => query.OrderBy(x => x.Price),
             "priceDesc" => query.OrderByDescending(x => x.Price),
-            _ => query
+            _ => query.OrderBy(x => x.Title)
         };
 
-        // TODO: Add pagination (+limit) and searching by multiple authors/categories
+        // Pagination
+        query = query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize);
 
         return Ok(await query.ToListAsync());
     }
@@ -43,9 +68,7 @@ public class BooksController(StoreContext dbContext) : ControllerBase
         var book = await dbContext.Books.FindAsync(id);
 
         if (book == null)
-        {
             return NotFound();
-        }
 
         return book;
     }
@@ -64,16 +87,12 @@ public class BooksController(StoreContext dbContext) : ControllerBase
     public async Task<ActionResult> UpdateBook(int id, Book updatedBook)
     {
         if (updatedBook.Id != id)
-        {
             return BadRequest("Book ID mismatch");
-        }
 
         var existingBook = await dbContext.Books.FindAsync(id);
 
         if (existingBook == null)
-        {
             return NotFound();
-        }
 
         existingBook.Title = updatedBook.Title;
         existingBook.Summary = updatedBook.Summary;
@@ -89,16 +108,12 @@ public class BooksController(StoreContext dbContext) : ControllerBase
         var book = await dbContext.Books.FindAsync(id);
 
         if (book == null)
-        {
             return NotFound();
-        }
 
         dbContext.Remove(book);
 
         if (await dbContext.SaveChangesAsync() > 0)
-        {
             return NoContent();
-        }
 
         return BadRequest("Problem deleting book");
     }
