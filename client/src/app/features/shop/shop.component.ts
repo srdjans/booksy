@@ -6,14 +6,20 @@ import { MatDialog } from "@angular/material/dialog";
 import { FiltersDialogComponent } from "./filters-dialog/filters-dialog.component";
 import { MatButton } from "@angular/material/button";
 import { MatIcon } from "@angular/material/icon";
+import { MatMenu, MatMenuTrigger } from "@angular/material/menu";
+import { MatListOption, MatSelectionList, MatSelectionListChange } from "@angular/material/list";
 
 @Component({
   selector: 'app-shop',
   imports: [
     BookItemComponent,
     MatButton,
-    MatIcon
-  ],
+    MatIcon,
+    MatMenu,
+    MatSelectionList,
+    MatListOption,
+    MatMenuTrigger
+],
   templateUrl: './shop.component.html',
   styleUrl: './shop.component.scss',
 })
@@ -21,27 +27,42 @@ export class ShopComponent implements OnInit {
   private shopService = inject(ShopService);
   private dialogService = inject(MatDialog);
   books: Book[] = [];
-  selectedAuthors: string[] = [];
   selectedCategories: string[] = [];
+  selectedSort: string = 'name';
+  sortOptions = [
+    {name: 'Alphabetical', value: 'name'},
+    {name: 'Price: Low-High', value: 'priceAsc'},
+    {name: 'Price: High-Low', value: 'priceDesc'}
+  ]
 
   ngOnInit(): void {
     this.initializeShop();
   }
 
   initializeShop() {
-    this.shopService.getAuthors();
     this.shopService.getCategories();
-    this.shopService.getBooks().subscribe({
+    this.getBooks();
+  }
+
+  getBooks() {
+    this.shopService.getBooks(this.selectedCategories, this.selectedSort).subscribe({
       next: response => this.books = response.data,
       error: error => console.log(error)
     })
+  }
+
+  onSortChange(event: MatSelectionListChange) {
+    const selectedOption = event.options[0];
+    if (selectedOption) {
+      this.selectedSort = selectedOption.value;
+      this.getBooks();
+    }
   }
 
   openFiltersDialog() {
     const dialogRef = this.dialogService.open(FiltersDialogComponent, {
       minWidth: '500px',
       data: {
-        selectedAuthors: this.selectedAuthors,
         selectedCategories: this.selectedCategories
       }
     });
@@ -49,9 +70,8 @@ export class ShopComponent implements OnInit {
     dialogRef.afterClosed().subscribe({
       next: result => {
         if (result) {
-          console.log(result);
-          this.selectedAuthors = result.selectedAuthors;
           this.selectedCategories = result.selectedCategories;
+          this.getBooks();
         }
       }
     })
