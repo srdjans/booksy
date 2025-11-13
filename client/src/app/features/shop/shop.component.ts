@@ -8,6 +8,7 @@ import { MatButton } from "@angular/material/button";
 import { MatIcon } from "@angular/material/icon";
 import { MatMenu, MatMenuTrigger } from "@angular/material/menu";
 import { MatListOption, MatSelectionList, MatSelectionListChange } from "@angular/material/list";
+import { ShopParams } from "../../shared/models/shopParams";
 
 @Component({
   selector: 'app-shop',
@@ -27,13 +28,12 @@ export class ShopComponent implements OnInit {
   private shopService = inject(ShopService);
   private dialogService = inject(MatDialog);
   books: Book[] = [];
-  selectedCategories: string[] = [];
-  selectedSort: string = 'name';
   sortOptions = [
     {name: 'Alphabetical', value: 'name'},
     {name: 'Price: Low-High', value: 'priceAsc'},
     {name: 'Price: High-Low', value: 'priceDesc'}
   ]
+  shopParams = new ShopParams();
 
   ngOnInit(): void {
     this.initializeShop();
@@ -45,7 +45,7 @@ export class ShopComponent implements OnInit {
   }
 
   getBooks() {
-    this.shopService.getBooks(this.selectedCategories, this.selectedSort).subscribe({
+    this.shopService.getBooks(this.shopParams).subscribe({
       next: response => this.books = response.data,
       error: error => console.log(error)
     })
@@ -54,7 +54,7 @@ export class ShopComponent implements OnInit {
   onSortChange(event: MatSelectionListChange) {
     const selectedOption = event.options[0];
     if (selectedOption) {
-      this.selectedSort = selectedOption.value;
+      this.shopParams.sort = selectedOption.value;
       this.getBooks();
     }
   }
@@ -63,14 +63,14 @@ export class ShopComponent implements OnInit {
     const dialogRef = this.dialogService.open(FiltersDialogComponent, {
       minWidth: '500px',
       data: {
-        selectedCategories: this.selectedCategories
+        selectedCategories: this.shopParams.categories
       }
     });
     
     dialogRef.afterClosed().subscribe({
       next: result => {
         if (result) {
-          this.selectedCategories = result.selectedCategories;
+          this.shopParams.categories = result.selectedCategories;
           this.getBooks();
         }
       }

@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from "@angular/common/http";
 import { inject, Injectable } from '@angular/core';
 import { Pagination } from "../../shared/models/pagination";
 import { Book } from "../../shared/models/book";
+import { ShopParams } from "../../shared/models/shopParams";
 
 @Injectable({
   providedIn: 'root',
@@ -13,15 +14,15 @@ export class ShopService {
   private http = inject(HttpClient);
   categories: string[] = [];
 
-  getBooks(categories?: string[], sort?: string) {
+  getBooks(shopParams: ShopParams) {
     let params = new HttpParams();
 
-    if (categories && categories.length > 0) {
-      params = params.append('categories', categories.join(','));
+    if (shopParams.categories.length > 0) {
+      params = params.append('categories', shopParams.categories.join(','));
     }
 
-    if (sort) {
-      params = params.append('sort', sort); 
+    if (shopParams.sort) {
+      params = params.append('sort', shopParams.sort); 
     }
 
     params = params.append('pageSize', this.pageSize);
