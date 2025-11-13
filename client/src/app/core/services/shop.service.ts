@@ -9,7 +9,6 @@ import { ShopParams } from "../../shared/models/shopParams";
 })
 export class ShopService {
   baseUrl = 'https://localhost:5001/api/';
-  pageSize = 20;
 
   private http = inject(HttpClient);
   categories: string[] = [];
@@ -25,7 +24,8 @@ export class ShopService {
       params = params.append('sort', shopParams.sort); 
     }
 
-    params = params.append('pageSize', this.pageSize);
+    params = params.append('pageSize', shopParams.pageSize);
+    params = params.append('pageNumber', shopParams.pageNumber);
 
     return this.http.get<Pagination<Book>>(this.baseUrl + 'books', {params});
   }
