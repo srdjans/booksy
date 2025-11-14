@@ -1,6 +1,6 @@
 @if (book) {
     <mat-card appearance="raised">
-        <img src="{{book.pictureUrl}}" alt="image of {{book.title}}" />
+        <img src="{{book.pictureUrl}}" alt="image of {{book.title}}" class="rounded-t-lg"/>
         <mat-card-content class="mt-2 flex-1">
             <h2 class="text-sm font-semibold uppercase">{{book.title}}</h2>
             <p class="font-light">{{book.price | currency}}</p>

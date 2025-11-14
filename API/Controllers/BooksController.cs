@@ -13,7 +13,7 @@ public class BooksController(StoreContext dbContext) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<Pagination<Book>>> GetBooks(
-        string? authors,
+        string? search,
         string? categories,
         string? sort,
         int pageNumber = 1,
@@ -28,7 +28,7 @@ public class BooksController(StoreContext dbContext) : ControllerBase
         var query = dbContext.Books.AsQueryable();
 
         // Filters
-        query = ApplyAuthorFilter(query, authors);
+        query = ApplySearchFilter(query, search);
         query = ApplyCategoryFilter(query, categories);
 
         // Count 
@@ -120,17 +120,12 @@ public class BooksController(StoreContext dbContext) : ControllerBase
             .ToListAsync();
     }
 
-    private static IQueryable<Book> ApplyAuthorFilter(IQueryable<Book> query, string? authors)
+    private static IQueryable<Book> ApplySearchFilter(IQueryable<Book> query, string? search)
     {
-        if (string.IsNullOrWhiteSpace(authors))
+        if (string.IsNullOrWhiteSpace(search))
             return query;
 
-        var authorList = authors
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(x => x.ToLower())
-            .ToArray();
-
-        return query.Where(x => authorList.Contains(x.Author.ToLower()));
+        return query.Where(x => x.Title.Contains(search) || x.Author.Contains(search));
     }
 
     private static IQueryable<Book> ApplyCategoryFilter(IQueryable<Book> query, string? categories)
@@ -150,9 +145,9 @@ public class BooksController(StoreContext dbContext) : ControllerBase
     {
         return sort switch
         {
-            "priceAsc" => query.OrderBy(b => b.Price),
-            "priceDesc" => query.OrderByDescending(b => b.Price),
-            _ => query.OrderBy(b => b.Title)
+            "priceAsc" => query.OrderBy(x => x.Price),
+            "priceDesc" => query.OrderByDescending(x => x.Price),
+            _ => query.OrderBy(x => x.Title)
         };   
     }
 }
