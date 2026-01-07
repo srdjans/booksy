@@ -1,17 +1,61 @@
-<header class="shadow-md p-3 w-full">
+<header class="shadow-md p-3 w-full" style="background-color: #fcfcfc;">
     <div class="flex align-middle items-center justify-between max-w-screen-2xl mx-auto">
-        <img src="/images/logo.png" alt="app logo" class="max-h-16">
-        <nav class="flex gap-3 my-2 uppercase text-xl">
-            <a>Home</a>
-            <a>Shop</a>
-            <a>Contact</a>
+        <!-- Desktop Layout -->
+        <img src="/images/logo.png" alt="app logo" class="max-h-16 hidden md:block">
+
+        <!-- Desktop Navigation -->
+        <nav class="hidden md:flex gap-3 my-2 uppercase text-xl">
+            <a routerLink="/" class="cursor-pointer hover:text-blue-600">Home</a>
+            <a routerLink="/shop" class="cursor-pointer hover:text-blue-600">Shop</a>
+            <a routerLink="/contact" class="cursor-pointer hover:text-blue-600">Contact</a>
         </nav>
-        <div class="flex gap-3 align-middle">
-            <a matBadge="5" matBadgeSize="large" class="custom-badge mt-2 mr-2">
+
+        <!-- Desktop Actions -->
+        <div class="hidden md:flex gap-3 align-middle">
+            <a matBadge="5" matBadgeSize="large" class="custom-badge mt-2 mr-2 cursor-pointer">
                 <mat-icon>shopping_cart</mat-icon>
             </a>
             <button mat-stroked-button>Login</button>
             <button mat-stroked-button>Register</button>
         </div>
+
+        <!-- Mobile Layout -->
+        <button mat-icon-button class="md:hidden" (click)="toggleMobileMenu()">
+            <mat-icon>menu</mat-icon>
+        </button>
+
+        <img src="/images/logo.png" alt="app logo" class="max-h-16 md:hidden">
+
+        <a matBadge="5" matBadgeSize="large" class="custom-badge cursor-pointer md:hidden">
+            <mat-icon>shopping_cart</mat-icon>
+        </a>
     </div>
 </header>
+
+<!-- Mobile Sidebar Menu -->
+@if (mobileMenuOpen) {
+    <div class="mobile-backdrop md:hidden" (click)="toggleMobileMenu()"></div>
+}
+<div class="mobile-menu md:hidden" [class.open]="mobileMenuOpen">
+    <div class="flex flex-col p-4 gap-4 h-full">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold">Menu</h2>
+            <button mat-icon-button (click)="toggleMobileMenu()">
+                <mat-icon>close</mat-icon>
+            </button>
+        </div>
+
+        <nav class="flex flex-col gap-4 uppercase text-lg">
+            <a routerLink="/" (click)="toggleMobileMenu()" class="cursor-pointer hover:text-blue-600 py-2">Home</a>
+            <a routerLink="/shop" (click)="toggleMobileMenu()" class="cursor-pointer hover:text-blue-600 py-2">Shop</a>
+            <a routerLink="/contact" (click)="toggleMobileMenu()" class="cursor-pointer hover:text-blue-600 py-2">Contact</a>
+        </nav>
+
+        <hr class="my-2">
+
+        <div class="flex flex-col gap-3">
+            <button mat-stroked-button class="w-full">Login</button>
+            <button mat-stroked-button class="w-full">Register</button>
+        </div>
+    </div>
+</div>

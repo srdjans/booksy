@@ -3,3 +3,27 @@
   padding: 0 24px !important;
   min-height: 56px !important;
 }
+
+::ng-deep .mat-mdc-paginator {
+  .mat-mdc-paginator-container {
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    padding: 0 !important;
+    min-height: 56px !important;
+  }
+
+  .mat-mdc-paginator-page-size {
+    align-items: center !important;
+    margin-right: 8px !important;
+    flex-direction: row !important;
+  }
+
+  .mat-mdc-paginator-range-actions {
+    margin-left: auto !important;
+  }
+
+  .mat-mdc-paginator-range-label {
+    white-space: nowrap !important;
+    margin: 0 8px !important;
+  }
+}
